@@ -50,9 +50,9 @@ export class Target extends Ball {
     ctx.restore();
   }
 
-  update(_deltaTime: number, _canvasWidth: number, _canvasHeight: number): void {
-    // Target doesn't move, so we override update to do nothing
-    // Just keep the rotation animation
-    this.rotation += 0.5 * _deltaTime;
+  update(deltaTime: number, _canvasWidth: number, _canvasHeight: number): void {
+    // Target doesn't move, but simulate a slow spinning animation
+    // Add small incremental distance to create slow rotation
+    this.totalDistance += 10 * deltaTime;
   }
 }

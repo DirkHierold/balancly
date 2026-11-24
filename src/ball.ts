@@ -13,8 +13,9 @@ export class Ball {
   public velocity: Vector2;
   public radius: number;
   public color: string;
-  protected rotation: number = 0;
-  protected rotationSpeed: number = 0;
+  // Realistic roll physics: separate rotations for X and Y movement
+  protected rotationAngle: number = 0; // Current rotation angle based on direction
+  protected totalDistance: number = 0; // Total distance rolled
 
   constructor(config: BallConfig) {
     this.position = { x: config.x, y: config.y };
@@ -28,12 +29,19 @@ export class Ball {
     this.position.x += this.velocity.x * deltaTime;
     this.position.y += this.velocity.y * deltaTime;
 
-    // Calculate rotation based on movement (roll physics)
-    const speed = Math.sqrt(
-      this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
-    );
-    this.rotationSpeed = speed / this.radius;
-    this.rotation += this.rotationSpeed * deltaTime;
+    // Calculate realistic roll rotation based on movement direction
+    const dx = this.velocity.x * deltaTime;
+    const dy = this.velocity.y * deltaTime;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > 0.001) {
+      // Update total distance for rotation calculation
+      this.totalDistance += distance;
+
+      // Calculate rotation angle based on movement direction
+      // The angle points perpendicular to movement direction
+      this.rotationAngle = Math.atan2(dy, dx);
+    }
 
     // Bounce off walls
     if (this.position.x - this.radius < 0) {
@@ -90,21 +98,51 @@ export class Ball {
 
   protected drawRotationMarkers(ctx: CanvasRenderingContext2D): void {
     ctx.save();
-    ctx.rotate(this.rotation);
 
-    // Draw 4 dots around the ball to show rotation
+    // Calculate rotation phase based on distance rolled
+    // Rotation = distance / circumference * 2π
+    const rotationPhase = (this.totalDistance / this.radius) % (Math.PI * 2);
+
+    // Draw markers that rotate perpendicular to movement direction
     const dotRadius = this.radius * 0.08;
     const dotDistance = this.radius * 0.65;
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    for (let i = 0; i < 4; i++) {
-      const angle = (i * Math.PI) / 2;
-      const x = Math.cos(angle) * dotDistance;
-      const y = Math.sin(angle) * dotDistance;
 
-      ctx.beginPath();
-      ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-      ctx.fill();
+    // Draw 8 dots in a pattern that shows rolling
+    for (let i = 0; i < 8; i++) {
+      // Angle around the circle
+      const circleAngle = (i * Math.PI) / 4;
+
+      // Add rotation phase to simulate rolling
+      const angle = circleAngle + rotationPhase;
+
+      // Position dots perpendicular to movement direction
+      // Rotate the entire pattern based on movement angle
+      const baseX = Math.cos(angle) * dotDistance;
+      const baseY = Math.sin(angle) * dotDistance;
+
+      // Rotate by movement direction (90 degrees offset for roll axis)
+      const rollAngle = this.rotationAngle + Math.PI / 2;
+      const x = baseX * Math.cos(rollAngle) - baseY * Math.sin(rollAngle);
+      const y = baseX * Math.sin(rollAngle) + baseY * Math.cos(rollAngle);
+
+      // Calculate depth (z-coordinate) for 3D effect
+      const z = Math.sin(angle + rotationPhase);
+
+      // Only draw dots on visible side (z > -0.3)
+      if (z > -0.3) {
+        // Fade based on depth
+        const alpha = Math.max(0.1, (z + 0.3) / 1.3) * 0.5;
+        ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+
+        // Scale dot size based on depth
+        const size = dotRadius * (0.6 + 0.4 * ((z + 1) / 2));
+
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     ctx.restore();

@@ -193,10 +193,19 @@ export class Game {
 
     // Get acceleration from device orientation or keyboard
     let acceleration = { x: 0, y: 0 };
-    if (this.orientationController.isPermissionGranted()) {
+
+    // Try keyboard controls first (always available on desktop)
+    if (this.updateKeyboardControls) {
+      const keyAccel = this.updateKeyboardControls();
+      // Only use keyboard if keys are pressed
+      if (keyAccel.x !== 0 || keyAccel.y !== 0) {
+        acceleration = keyAccel;
+      } else if (this.orientationController.isPermissionGranted()) {
+        // Fall back to orientation if no keys pressed
+        acceleration = this.orientationController.getAcceleration();
+      }
+    } else if (this.orientationController.isPermissionGranted()) {
       acceleration = this.orientationController.getAcceleration();
-    } else if (this.updateKeyboardControls) {
-      acceleration = this.updateKeyboardControls();
     }
 
     // Update player
