@@ -1,4 +1,4 @@
-import { Ball, BallConfig } from './ball';
+import { Ball } from './ball';
 
 export class Player extends Ball {
   constructor(x: number, y: number, radius: number = 25) {

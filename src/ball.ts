@@ -1,4 +1,4 @@
-import { Vector2 } from './utils';
+import type { Vector2 } from './utils';
 
 export interface BallConfig {
   x: number;

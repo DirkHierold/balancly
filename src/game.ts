@@ -2,7 +2,7 @@ import { Player } from './player';
 import { Target } from './target';
 import { Enemy } from './enemy';
 import { DeviceOrientationController } from './deviceOrientation';
-import { circleCollision, randomInt, clamp } from './utils';
+import { circleCollision, randomInt } from './utils';
 
 export class Game {
   private canvas: HTMLCanvasElement;

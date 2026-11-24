@@ -57,7 +57,7 @@ function init(): void {
   setupMobileOptimizations();
 
   // Create and start game
-  const game = new Game(canvas);
+  new Game(canvas);
 
   // Handle page visibility changes
   document.addEventListener('visibilitychange', () => {
