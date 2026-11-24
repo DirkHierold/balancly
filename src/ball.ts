@@ -99,49 +99,93 @@ export class Ball {
   protected drawRotationMarkers(ctx: CanvasRenderingContext2D): void {
     ctx.save();
 
-    // Calculate rotation phase based on distance rolled
-    // Rotation = distance / circumference * 2π
-    const rotationPhase = (this.totalDistance / this.radius) % (Math.PI * 2);
+    // Professional "Great-Circle Stripes" method for realistic rolling
+    // Based on game-dev shader techniques (Godot, Unity)
 
-    // Draw markers that rotate perpendicular to movement direction
-    const dotRadius = this.radius * 0.08;
-    const dotDistance = this.radius * 0.65;
+    // Calculate roll phase based on distance traveled
+    const rollPhase = (this.totalDistance / this.radius) % (Math.PI * 2);
 
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    // Roll axis is perpendicular to movement direction
+    const rollAxis = this.rotationAngle + Math.PI / 2;
 
-    // Draw 8 dots in a pattern that shows rolling
-    for (let i = 0; i < 8; i++) {
-      // Angle around the circle
-      const circleAngle = (i * Math.PI) / 4;
+    // Draw 3 great-circle stripes around the ball
+    const numStripes = 3;
+    const stripeWidth = this.radius * 0.12;
 
-      // Add rotation phase to simulate rolling
-      const angle = circleAngle + rotationPhase;
+    for (let i = 0; i < numStripes; i++) {
+      // Each stripe is offset by 120 degrees (360/3)
+      const stripePhase = rollPhase + (i * Math.PI * 2) / numStripes;
 
-      // Position dots perpendicular to movement direction
-      // Rotate the entire pattern based on movement angle
-      const baseX = Math.cos(angle) * dotDistance;
-      const baseY = Math.sin(angle) * dotDistance;
+      // Draw curved stripe as a great circle
+      this.drawGreatCircleStripe(
+        ctx,
+        stripePhase,
+        rollAxis,
+        stripeWidth
+      );
+    }
 
-      // Rotate by movement direction (90 degrees offset for roll axis)
-      const rollAngle = this.rotationAngle + Math.PI / 2;
-      const x = baseX * Math.cos(rollAngle) - baseY * Math.sin(rollAngle);
-      const y = baseX * Math.sin(rollAngle) + baseY * Math.cos(rollAngle);
+    ctx.restore();
+  }
 
-      // Calculate depth (z-coordinate) for 3D effect
-      const z = Math.sin(angle + rotationPhase);
+  private drawGreatCircleStripe(
+    ctx: CanvasRenderingContext2D,
+    phase: number,
+    rollAxis: number,
+    width: number
+  ): void {
+    // Draw a curved stripe that wraps around the ball
+    // This creates the illusion of a 3D sphere rolling
 
-      // Only draw dots on visible side (z > -0.3)
+    ctx.save();
+
+    // Sample points along the stripe
+    const segments = 32;
+    const path: { x: number; y: number; alpha: number }[] = [];
+
+    for (let i = 0; i <= segments; i++) {
+      const t = (i / segments) * Math.PI * 2;
+
+      // Position on the great circle (perpendicular to roll axis)
+      const circleX = Math.cos(t) * this.radius * 0.9;
+      const circleY = Math.sin(t) * this.radius * 0.9;
+
+      // Rotate around roll axis to create the stripe
+      const x = circleX * Math.cos(rollAxis) - circleY * Math.sin(rollAxis);
+      const y = circleX * Math.sin(rollAxis) + circleY * Math.cos(rollAxis);
+
+      // Calculate z-depth for 3D effect (how far forward/back the point is)
+      const z = Math.cos(t + phase);
+
+      // Calculate alpha based on z-depth
+      // Points at the back (z < 0) are more transparent
+      const alpha = Math.max(0, Math.min(1, (z + 0.5) * 1.2));
+
+      // Check if point is on visible hemisphere
       if (z > -0.3) {
-        // Fade based on depth
-        const alpha = Math.max(0.1, (z + 0.3) / 1.3) * 0.5;
-        ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+        path.push({ x, y, alpha });
+      }
+    }
 
-        // Scale dot size based on depth
-        const size = dotRadius * (0.6 + 0.4 * ((z + 1) / 2));
+    // Draw the stripe path
+    if (path.length > 1) {
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
 
+      // Draw with varying opacity based on depth
+      for (let i = 0; i < path.length - 1; i++) {
+        const p1 = path[i];
+        const p2 = path[i + 1];
+
+        // Average alpha for smooth gradient
+        const alpha = (p1.alpha + p2.alpha) / 2;
+
+        ctx.strokeStyle = `rgba(0, 0, 0, ${alpha * 0.3})`;
         ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
       }
     }
 
