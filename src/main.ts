@@ -57,7 +57,12 @@ function init(): void {
   setupMobileOptimizations();
 
   // Create and start game
-  new Game(canvas);
+  const game = new Game(canvas);
+
+  // Expose game globally for testing (dev only)
+  if (import.meta.env.DEV) {
+    (window as any).game = game;
+  }
 
   // Handle page visibility changes
   document.addEventListener('visibilitychange', () => {
