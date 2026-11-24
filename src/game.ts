@@ -81,17 +81,17 @@ export class Game {
   }
 
   private checkPermission(): void {
+    // Always setup keyboard controls (works on all platforms)
+    this.setupKeyboardControls();
+
     if (this.orientationController.isAvailable()) {
       if (!this.orientationController.isPermissionGranted()) {
         this.permissionButton.style.display = 'block';
-      } else {
-        this.start();
       }
-    } else {
-      // Fallback to keyboard controls
-      this.setupKeyboardControls();
-      this.start();
     }
+
+    // Always start the game
+    this.start();
   }
 
   private setupEventListeners(): void {
