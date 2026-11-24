@@ -37,7 +37,7 @@ A DeviceOrientation-based ball game where you tilt your device to control a yell
 # Install dependencies
 npm install
 
-# Start dev server (with HTTPS for DeviceOrientation)
+# Start dev server
 npm run dev
 
 # Build for production
@@ -46,6 +46,11 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+**Note:** DeviceOrientation API requires HTTPS. For local development, you can:
+- Test on `http://localhost:3000` with keyboard controls (WASD/Arrow keys)
+- Test the deployed version on GitHub Pages (automatically has HTTPS)
+- Or set up a local HTTPS proxy if needed
 
 ## Mobile Features
 
