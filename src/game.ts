@@ -111,7 +111,10 @@ export class Game {
   private setupKeyboardControls(): void {
     const keys: { [key: string]: boolean } = {};
 
+    console.log('🎮 Keyboard controls initialized!');
+
     window.addEventListener('keydown', (e) => {
+      console.log(`⌨️ Key down: ${e.key}`);
       keys[e.key] = true;
     });
 
@@ -129,6 +132,10 @@ export class Game {
       if (keys['ArrowRight'] || keys['d'] || keys['D']) ax += acceleration;
       if (keys['ArrowUp'] || keys['w'] || keys['W']) ay -= acceleration;
       if (keys['ArrowDown'] || keys['s'] || keys['S']) ay += acceleration;
+
+      if (ax !== 0 || ay !== 0) {
+        console.log(`🎯 Acceleration: x=${ax}, y=${ay}`);
+      }
 
       return { x: ax, y: ay };
     };
