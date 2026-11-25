@@ -99,93 +99,60 @@ export class Ball {
   protected drawRotationMarkers(ctx: CanvasRenderingContext2D): void {
     ctx.save();
 
-    // Professional "Great-Circle Stripes" method for realistic rolling
-    // Based on game-dev shader techniques (Godot, Unity)
+    // Simple rotating dots approach (like Marble Madness, Super Monkey Ball)
+    // 8 dots distributed on sphere surface that rotate realistically
 
-    // Calculate roll phase based on distance traveled
-    const rollPhase = (this.totalDistance / this.radius) % (Math.PI * 2);
+    // Calculate rotation based on distance traveled
+    const rollAmount = this.totalDistance / this.radius;
 
-    // Roll axis is perpendicular to movement direction
-    const rollAxis = this.rotationAngle + Math.PI / 2;
+    // Rotation axis perpendicular to movement direction
+    const rollAxisX = -Math.sin(this.rotationAngle);
+    const rollAxisY = Math.cos(this.rotationAngle);
 
-    // Draw 3 great-circle stripes around the ball
-    const numStripes = 3;
-    const stripeWidth = this.radius * 0.12;
+    // 8 dots positioned around the sphere
+    const dots = [
+      { theta: 0, phi: 0 },           // front center
+      { theta: Math.PI / 2, phi: 0 }, // top
+      { theta: Math.PI, phi: 0 },     // back center
+      { theta: -Math.PI / 2, phi: 0 }, // bottom
+      { theta: Math.PI / 4, phi: Math.PI / 2 }, // right-top
+      { theta: -Math.PI / 4, phi: Math.PI / 2 }, // right-bottom
+      { theta: 3 * Math.PI / 4, phi: Math.PI / 2 }, // left-top
+      { theta: -3 * Math.PI / 4, phi: Math.PI / 2 }, // left-bottom
+    ];
 
-    for (let i = 0; i < numStripes; i++) {
-      // Each stripe is offset by 120 degrees (360/3)
-      const stripePhase = rollPhase + (i * Math.PI * 2) / numStripes;
+    for (const dot of dots) {
+      // Initial 3D position on sphere (before rotation)
+      let x = Math.cos(dot.phi) * Math.sin(dot.theta) * this.radius * 0.85;
+      let y = Math.cos(dot.theta) * this.radius * 0.85;
+      let z = Math.sin(dot.phi) * Math.sin(dot.theta) * this.radius * 0.85;
 
-      // Draw curved stripe as a great circle
-      this.drawGreatCircleStripe(
-        ctx,
-        stripePhase,
-        rollAxis,
-        stripeWidth
-      );
-    }
+      // Rotate around the roll axis by rollAmount
+      // Using Rodrigues' rotation formula
+      const cosAngle = Math.cos(rollAmount);
+      const sinAngle = Math.sin(rollAmount);
 
-    ctx.restore();
-  }
+      // For 2D canvas, we rotate around axis in XY plane
+      const dotProduct = x * rollAxisX + y * rollAxisY;
+      const crossX = rollAxisY * z;
+      const crossY = -rollAxisX * z;
 
-  private drawGreatCircleStripe(
-    ctx: CanvasRenderingContext2D,
-    phase: number,
-    rollAxis: number,
-    width: number
-  ): void {
-    // Draw a curved stripe that wraps around the ball
-    // This creates the illusion of a 3D sphere rolling
+      const rotatedX = x * cosAngle + crossX * sinAngle + rollAxisX * dotProduct * (1 - cosAngle);
+      const rotatedY = y * cosAngle + crossY * sinAngle + rollAxisY * dotProduct * (1 - cosAngle);
+      const rotatedZ = z * cosAngle + (-rollAxisY * x + rollAxisX * y) * sinAngle;
 
-    ctx.save();
+      // Only draw dots on visible hemisphere (z > 0 means facing camera)
+      if (rotatedZ > 0) {
+        // Alpha based on z-depth (dots further away are more transparent)
+        const alpha = Math.max(0.3, Math.min(1, rotatedZ / this.radius + 0.5));
 
-    // Sample points along the stripe
-    const segments = 32;
-    const path: { x: number; y: number; alpha: number }[] = [];
+        // Dot size based on depth
+        const dotRadius = Math.max(2, this.radius * 0.08 * (rotatedZ / this.radius + 1));
 
-    for (let i = 0; i <= segments; i++) {
-      const t = (i / segments) * Math.PI * 2;
-
-      // Position on the great circle (perpendicular to roll axis)
-      const circleX = Math.cos(t) * this.radius * 0.9;
-      const circleY = Math.sin(t) * this.radius * 0.9;
-
-      // Rotate around roll axis to create the stripe
-      const x = circleX * Math.cos(rollAxis) - circleY * Math.sin(rollAxis);
-      const y = circleX * Math.sin(rollAxis) + circleY * Math.cos(rollAxis);
-
-      // Calculate z-depth for 3D effect (how far forward/back the point is)
-      const z = Math.cos(t + phase);
-
-      // Calculate alpha based on z-depth
-      // Points at the back (z < 0) are more transparent
-      const alpha = Math.max(0, Math.min(1, (z + 0.5) * 1.2));
-
-      // Check if point is on visible hemisphere
-      if (z > -0.3) {
-        path.push({ x, y, alpha });
-      }
-    }
-
-    // Draw the stripe path
-    if (path.length > 1) {
-      ctx.lineWidth = width;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // Draw with varying opacity based on depth
-      for (let i = 0; i < path.length - 1; i++) {
-        const p1 = path[i];
-        const p2 = path[i + 1];
-
-        // Average alpha for smooth gradient
-        const alpha = (p1.alpha + p2.alpha) / 2;
-
-        ctx.strokeStyle = `rgba(0, 0, 0, ${alpha * 0.3})`;
+        ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
         ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
+        ctx.arc(rotatedX, rotatedY, dotRadius, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
