@@ -1,5 +1,25 @@
 import { Game } from './game';
 
+// Wake Lock management
+let wakeLock: any = null;
+
+async function requestWakeLock(): Promise<void> {
+  if (!('wakeLock' in navigator)) {
+    return;
+  }
+
+  try {
+    wakeLock = await (navigator as any).wakeLock.request('screen');
+    console.log('Wake lock acquired');
+
+    wakeLock.addEventListener('release', () => {
+      console.log('Wake lock released');
+    });
+  } catch (err) {
+    console.warn('Could not acquire wake lock:', err);
+  }
+}
+
 // Mobile Optimizations
 async function setupMobileOptimizations(): Promise<void> {
   // Prevent context menu on long press
@@ -24,25 +44,16 @@ async function setupMobileOptimizations(): Promise<void> {
     }
   }
 
-  // Request wake lock to prevent screen from sleeping (if supported)
-  if ('wakeLock' in navigator) {
-    try {
-      const wakeLock = await (navigator as any).wakeLock.request('screen');
-      console.log('Wake lock acquired');
+  // Request initial wake lock
+  await requestWakeLock();
 
-      // Re-acquire wake lock if it's released (e.g., when tab becomes inactive)
-      wakeLock.addEventListener('release', async () => {
-        console.log('Wake lock released, re-acquiring...');
-        try {
-          await (navigator as any).wakeLock.request('screen');
-        } catch (err) {
-          console.warn('Could not re-acquire wake lock:', err);
-        }
-      });
-    } catch (err) {
-      console.warn('Could not acquire wake lock:', err);
+  // Re-acquire wake lock when page becomes visible
+  document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden && wakeLock !== null && wakeLock.released) {
+      console.log('Page visible, re-acquiring wake lock...');
+      await requestWakeLock();
     }
-  }
+  });
 }
 
 // Initialize game
@@ -63,17 +74,6 @@ function init(): void {
   if (import.meta.env.DEV) {
     (window as any).game = game;
   }
-
-  // Handle page visibility changes
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      // Pause game when tab is hidden
-      console.log('Tab hidden');
-    } else {
-      // Resume game when tab is visible
-      console.log('Tab visible');
-    }
-  });
 }
 
 // Start game when DOM is ready

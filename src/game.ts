@@ -22,8 +22,10 @@ export class Game {
   private scoreElement: HTMLElement;
   private highscoreElement: HTMLElement;
   private alltimeElement: HTMLElement;
+  private scoreContainer: HTMLElement;
   private newGameButton: HTMLButtonElement;
-  private permissionButton: HTMLButtonElement;
+  private playButton: HTMLButtonElement;
+  private themeToggle: HTMLElement;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -52,15 +54,18 @@ export class Game {
     this.scoreElement = document.getElementById('score')!;
     this.highscoreElement = document.getElementById('highscore')!;
     this.alltimeElement = document.getElementById('alltime')!;
+    this.scoreContainer = document.getElementById('scoreContainer')!;
     this.newGameButton = document.getElementById(
       'newGameButton'
     )! as HTMLButtonElement;
-    this.permissionButton = document.getElementById(
-      'permissionButton'
+    this.playButton = document.getElementById(
+      'playButton'
     )! as HTMLButtonElement;
+    this.themeToggle = document.getElementById('themeToggle')!;
 
     this.updateScoreDisplay();
     this.setupEventListeners();
+    this.initTheme();
     this.checkPermission();
   }
 
@@ -80,31 +85,78 @@ export class Game {
     }
   }
 
+  private initTheme(): void {
+    // Load saved theme or default to light
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.className = savedTheme;
+
+    // Set active button
+    const buttons = this.themeToggle.querySelectorAll('.theme-btn');
+    buttons.forEach((btn) => {
+      const button = btn as HTMLButtonElement;
+      if (button.dataset.theme === savedTheme) {
+        button.classList.add('active');
+      } else {
+        button.classList.remove('active');
+      }
+    });
+  }
+
+  private setTheme(theme: string): void {
+    document.documentElement.className = theme;
+    localStorage.setItem('theme', theme);
+
+    // Update active button
+    const buttons = this.themeToggle.querySelectorAll('.theme-btn');
+    buttons.forEach((btn) => {
+      const button = btn as HTMLButtonElement;
+      if (button.dataset.theme === theme) {
+        button.classList.add('active');
+      } else {
+        button.classList.remove('active');
+      }
+    });
+  }
+
   private checkPermission(): void {
     // Always setup keyboard controls (works on all platforms)
     this.setupKeyboardControls();
 
-    if (this.orientationController.isAvailable()) {
-      if (!this.orientationController.isPermissionGranted()) {
-        this.permissionButton.style.display = 'block';
-      }
-    }
+    // Show play button initially
+    this.playButton.classList.remove('hidden');
 
-    // Always start the game
-    this.start();
+    // Don't start the game automatically - wait for play button click
   }
 
   private setupEventListeners(): void {
-    this.permissionButton.addEventListener('click', async () => {
-      const granted = await this.orientationController.requestPermission();
-      if (granted) {
-        this.permissionButton.style.display = 'none';
-        this.start();
+    // Play button - start game and request motion permission if needed
+    this.playButton.addEventListener('click', async () => {
+      // Request orientation permission if available and not granted
+      if (this.orientationController.isAvailable() &&
+          !this.orientationController.isPermissionGranted()) {
+        await this.orientationController.requestPermission();
       }
+
+      // Hide play button and start game
+      this.playButton.classList.add('hidden');
+      this.start();
     });
 
+    // New game button - restart game
     this.newGameButton.addEventListener('click', () => {
       this.restart();
+    });
+
+    // Theme toggle buttons
+    const themeButtons = this.themeToggle.querySelectorAll('.theme-btn');
+    themeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const button = btn as HTMLButtonElement;
+        const theme = button.dataset.theme;
+        if (theme) {
+          this.setTheme(theme);
+        }
+      });
     });
   }
 
@@ -179,7 +231,8 @@ export class Game {
 
   private handlePlayerHit(): void {
     this.gameOver = true;
-    this.newGameButton.style.display = 'block';
+    this.scoreContainer.classList.add('game-over');
+    this.newGameButton.classList.add('visible');
   }
 
   private updateScoreDisplay(): void {
@@ -249,8 +302,11 @@ export class Game {
   }
 
   private draw(): void {
-    // Clear canvas
-    this.ctx.fillStyle = '#008000';
+    // Clear canvas with theme-aware background color
+    const bgColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--canvas-bg')
+      .trim();
+    this.ctx.fillStyle = bgColor;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw all game objects
@@ -288,7 +344,8 @@ export class Game {
     this.enemies = [];
     this.player = new Player(this.canvas.width / 2, this.canvas.height / 2);
     this.target = this.createTarget();
-    this.newGameButton.style.display = 'none';
+    this.scoreContainer.classList.remove('game-over');
+    this.newGameButton.classList.remove('visible');
     this.updateScoreDisplay();
   }
 

@@ -1,24 +1,40 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Balancly" />
-    <title>Balancly - Balance Game</title>
+    <meta name="theme-color" content="#ffffff" />
+    <title>Balancly</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
+    <header id="header">
+      <span class="header-title">Balancly</span>
+      <div id="themeToggle" class="theme-toggle">
+        <button class="theme-btn" data-theme="light" aria-label="Light mode">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        </button>
+        <button class="theme-btn" data-theme="dark" aria-label="Dark mode">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+      </div>
+    </header>
     <div id="app">
       <canvas id="gameCanvas"></canvas>
       <div id="ui">
-        <div id="score">Score: 0</div>
-        <div id="highscore">Highscore: 0</div>
-        <div id="alltime">Alltime: 0</div>
-        <button id="permissionButton" style="display: none;">Enable Motion</button>
-        <button id="newGameButton" style="display: none;">NEW GAME</button>
+        <button id="playButton" class="play-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <div id="scoreContainer" class="score-container">
+          <div id="score">Score: 0</div>
+          <div id="highscore">Highscore: 0</div>
+          <div id="alltime">Alltime: 0</div>
+        </div>
+        <button id="newGameButton" class="new-game-button">NEW GAME</button>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
