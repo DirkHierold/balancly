@@ -17,6 +17,7 @@ export class Game {
   private alltime: number = 0;
   private lastTime: number = 0;
   private animationFrameId: number = 0;
+  private wakeLock: any = null;
 
   // UI Elements
   private scoreElement: HTMLElement;
@@ -66,7 +67,35 @@ export class Game {
     this.updateScoreDisplay();
     this.setupEventListeners();
     this.initTheme();
+    this.setupWakeLock();
     this.checkPermission();
+  }
+
+  private async setupWakeLock(): Promise<void> {
+    // Setup wake lock re-acquisition on visibility change
+    document.addEventListener('visibilitychange', async () => {
+      if (!document.hidden && this.wakeLock !== null && this.wakeLock.released) {
+        console.log('Page visible, re-acquiring wake lock...');
+        await this.requestWakeLock();
+      }
+    });
+  }
+
+  private async requestWakeLock(): Promise<void> {
+    if (!('wakeLock' in navigator)) {
+      return;
+    }
+
+    try {
+      this.wakeLock = await (navigator as any).wakeLock.request('screen');
+      console.log('Wake lock acquired');
+
+      this.wakeLock.addEventListener('release', () => {
+        console.log('Wake lock released');
+      });
+    } catch (err) {
+      console.warn('Could not acquire wake lock:', err);
+    }
   }
 
   private resizeCanvas(): void {
@@ -131,6 +160,9 @@ export class Game {
   private setupEventListeners(): void {
     // Play button - start game and request motion permission if needed
     this.playButton.addEventListener('click', async () => {
+      // Request wake lock to prevent screen timeout
+      await this.requestWakeLock();
+
       // Request orientation permission if available and not granted
       if (this.orientationController.isAvailable() &&
           !this.orientationController.isPermissionGranted()) {
@@ -302,12 +334,8 @@ export class Game {
   }
 
   private draw(): void {
-    // Clear canvas with theme-aware background color
-    const bgColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--canvas-bg')
-      .trim();
-    this.ctx.fillStyle = bgColor;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    // Clear canvas to transparent (background comes from #app via CSS)
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw all game objects
     this.target.draw(this.ctx);

@@ -1,25 +1,5 @@
 import { Game } from './game';
 
-// Wake Lock management
-let wakeLock: any = null;
-
-async function requestWakeLock(): Promise<void> {
-  if (!('wakeLock' in navigator)) {
-    return;
-  }
-
-  try {
-    wakeLock = await (navigator as any).wakeLock.request('screen');
-    console.log('Wake lock acquired');
-
-    wakeLock.addEventListener('release', () => {
-      console.log('Wake lock released');
-    });
-  } catch (err) {
-    console.warn('Could not acquire wake lock:', err);
-  }
-}
-
 // Mobile Optimizations
 async function setupMobileOptimizations(): Promise<void> {
   // Prevent context menu on long press
@@ -43,17 +23,6 @@ async function setupMobileOptimizations(): Promise<void> {
       console.warn('Could not lock screen orientation:', err);
     }
   }
-
-  // Request initial wake lock
-  await requestWakeLock();
-
-  // Re-acquire wake lock when page becomes visible
-  document.addEventListener('visibilitychange', async () => {
-    if (!document.hidden && wakeLock !== null && wakeLock.released) {
-      console.log('Page visible, re-acquiring wake lock...');
-      await requestWakeLock();
-    }
-  });
 }
 
 // Initialize game
