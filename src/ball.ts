@@ -43,21 +43,23 @@ export class Ball {
       this.rotationAngle = Math.atan2(dy, dx);
     }
 
-    // Bounce off walls
+    // Bounce off walls with dampening (restitution coefficient 0.8)
+    const restitution = 0.8;
+
     if (this.position.x - this.radius < 0) {
       this.position.x = this.radius;
-      this.velocity.x *= -1;
+      this.velocity.x *= -restitution;
     } else if (this.position.x + this.radius > canvasWidth) {
       this.position.x = canvasWidth - this.radius;
-      this.velocity.x *= -1;
+      this.velocity.x *= -restitution;
     }
 
     if (this.position.y - this.radius < 0) {
       this.position.y = this.radius;
-      this.velocity.y *= -1;
+      this.velocity.y *= -restitution;
     } else if (this.position.y + this.radius > canvasHeight) {
       this.position.y = canvasHeight - this.radius;
-      this.velocity.y *= -1;
+      this.velocity.y *= -restitution;
     }
   }
 

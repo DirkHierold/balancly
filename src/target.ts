@@ -1,7 +1,7 @@
 import { Ball } from './ball';
 
 export class Target extends Ball {
-  constructor(x: number, y: number, radius: number = 25) {
+  constructor(x: number, y: number, radius: number = 18) {
     super({
       x,
       y,

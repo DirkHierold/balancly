@@ -2,9 +2,9 @@ import { Ball } from './ball';
 import { randomRange } from './utils';
 
 export class Enemy extends Ball {
-  constructor(x: number, y: number, radius: number = 25) {
+  constructor(x: number, y: number, radius: number = 18) {
     // Random velocity for each enemy
-    const speed = randomRange(60, 180);
+    const speed = randomRange(30, 80);
     const angle = randomRange(0, Math.PI * 2);
     const vx = Math.cos(angle) * speed;
     const vy = Math.sin(angle) * speed;
