@@ -163,11 +163,8 @@ export class Game {
       // Request wake lock to prevent screen timeout
       await this.requestWakeLock();
 
-      // Request orientation permission if available and not granted
-      if (this.orientationController.isAvailable() &&
-          !this.orientationController.isPermissionGranted()) {
-        await this.orientationController.requestPermission();
-      }
+      // Request orientation permission (always try - method has its own checks)
+      await this.orientationController.requestPermission();
 
       // Hide play button and start game
       this.playButton.classList.add('hidden');
