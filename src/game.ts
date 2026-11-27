@@ -160,11 +160,12 @@ export class Game {
   private setupEventListeners(): void {
     // Play button - start game and request motion permission if needed
     this.playButton.addEventListener('click', async () => {
-      // Request wake lock to prevent screen timeout
-      await this.requestWakeLock();
-
-      // Request orientation permission (always try - method has its own checks)
+      // Request orientation permission FIRST (needs user interaction)
+      // iOS only allows ONE permission dialog per click
       await this.orientationController.requestPermission();
+
+      // Request wake lock AFTER orientation (non-blocking, runs in background)
+      this.requestWakeLock(); // No await - don't block game start
 
       // Hide play button and start game
       this.playButton.classList.add('hidden');
